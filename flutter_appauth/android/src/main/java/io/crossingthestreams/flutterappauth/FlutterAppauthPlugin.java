@@ -44,6 +44,7 @@ import io.flutter.plugin.common.PluginRegistry;
  * FlutterAppauthPlugin
  */
 public class FlutterAppauthPlugin implements FlutterPlugin, MethodCallHandler, PluginRegistry.ActivityResultListener, ActivityAware {
+    private static final String ADDITIONAL_PARAMETER_RESPONSE_TYPE = "response_type";
     private static final String AUTHORIZE_AND_EXCHANGE_CODE_METHOD = "authorizeAndExchangeCode";
     private static final String AUTHORIZE_METHOD = "authorize";
     private static final String TOKEN_METHOD = "token";
@@ -298,11 +299,21 @@ public class FlutterAppauthPlugin implements FlutterPlugin, MethodCallHandler, P
 
 
     private void performAuthorization(AuthorizationServiceConfiguration serviceConfiguration, String clientId, String redirectUrl, ArrayList<String> scopes, String loginHint, String nonce, Map<String, String> additionalParameters, boolean exchangeCode, ArrayList<String> promptValues, String responseMode) {
+        final boolean hasAdditionalParameters = additionalParameters != null && !additionalParameters.isEmpty();
+        final boolean hasResponseTypeAdditionalParameters = hasAdditionalParameters && additionalParameters.containsKey(ADDITIONAL_PARAMETER_RESPONSE_TYPE);
+
+        final String responseType = !hasResponseTypeAdditionalParameters ? ResponseTypeValues.CODE :
+                additionalParameters.get(ADDITIONAL_PARAMETER_RESPONSE_TYPE);
+
+        if(hasResponseTypeAdditionalParameters){
+            additionalParameters.remove(ADDITIONAL_PARAMETER_RESPONSE_TYPE);
+        }
+
         AuthorizationRequest.Builder authRequestBuilder =
                 new AuthorizationRequest.Builder(
                         serviceConfiguration,
                         clientId,
-                        ResponseTypeValues.CODE,
+                        responseType,
                         Uri.parse(redirectUrl));
 
         if (scopes != null && !scopes.isEmpty()) {
